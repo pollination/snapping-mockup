@@ -133,7 +133,7 @@ export class SnapManager {
 
       if (isNaN(gridDist)) gridDist = Infinity
 
-      if (minDist < gridSize && minDist < gridDist) {
+      if (minDist < gridSize) {
         const index = distances.indexOf(minDist)
         const point = points[index]
         nextHandle = { ...initialHandle, x: point.x, y: point.y }
