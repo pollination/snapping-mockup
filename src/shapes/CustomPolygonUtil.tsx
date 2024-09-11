@@ -1,34 +1,42 @@
 import {
   IndexKey,
-  Polyline2d,
+  Polygon2d,
   SVGContainer,
   ShapeUtil,
   TLHandle,
   Vec,
   structuredClone,
 } from '@tldraw/tldraw'
-import { CustomLineShape } from './CustomLine.types'
-import { customLineProps } from './CustomLine.props'
+import { CustomPolygonShape } from './CustomPolygon.types'
+import { customPolygonProps } from './CustomPolygon.props'
 import { SnapManager } from '../snapping/SnapManager'
 
-export class CustomLineUtil extends ShapeUtil<CustomLineShape> {
-  static override type = 'custom-line' as const
-  static override props = customLineProps
+export class CustomPolygonUtil extends ShapeUtil<CustomPolygonShape> {
+  static override type = 'custom-polygon' as const
+  static override props = customPolygonProps
 
   override hideResizeHandles = () => true
   override hideRotateHandle = () => true
 
-  getDefaultProps(): CustomLineShape['props'] {
+  getDefaultProps(): CustomPolygonShape['props'] {
     return {
-      name: 'Line',
-      start: [0, 0],
-      end: [100, 0],
+      name: 'Polygon',
+      points: [
+        [0, 0],
+        [100, 0],
+        [100, 100],
+        [0, 100]
+      ]
     }
   }
 
-  getGeometry(shape: CustomLineShape) {
-    return new Polyline2d({
-      points: [shape.props.start, shape.props.end].map(Vec.FromArray),
+  getGeometry(shape: CustomPolygonShape) {
+    // const pts: number[][] = [ ...shape.props.points, 
+    //   [ ...shape.props.points].pop() as number[] ]
+
+    return new Polygon2d({
+      points: shape.props.points.map(Vec.FromArray),
+      isFilled: false
     })
   }
 
@@ -36,7 +44,7 @@ export class CustomLineUtil extends ShapeUtil<CustomLineShape> {
    * Snapping here
    */
   override onHandleDrag = (
-    shape: CustomLineShape,
+    shape: CustomPolygonShape,
     { handle }: { handle: TLHandle }
   ) => {
     const next = structuredClone(shape)
@@ -59,25 +67,20 @@ export class CustomLineUtil extends ShapeUtil<CustomLineShape> {
         nearest: (this.editor as any)?.customSnapping?.nearest,
       })
     }
-
-    if (Number(handle.id) === 0) {
-      next.props.start = [nextHandle.x, nextHandle.y]
-    } else {
-      next.props.end = [nextHandle.x, nextHandle.y]
-    }
+    next.props.points[Number(handle.id)] = [nextHandle.x, nextHandle.y]
 
     return next
   }
 
-  getHandles(shape: CustomLineShape): TLHandle[] {
-    const line = this.editor.getShapeGeometry(shape) as Polyline2d
-    const handles = line.vertices.map((v: Vec, i: number) => {
+  getHandles(shape: CustomPolygonShape): TLHandle[] {
+    const polygon = this.editor.getShapeGeometry(shape) as Polygon2d
+    const handles = polygon.vertices.map((v: Vec, i: number) => {
       return {
         id: `${i}`,
         type: 'vertex',
         canBind: false,
         canSnap: true,
-        index: `cl${i}` as IndexKey,
+        index: `p${i}` as IndexKey,
         x: v.x,
         y: v.y,
       }
@@ -87,8 +90,8 @@ export class CustomLineUtil extends ShapeUtil<CustomLineShape> {
   }
 
   override onTranslateEnd = (
-    initial: CustomLineShape,
-    current: CustomLineShape
+    initial: CustomPolygonShape,
+    current: CustomPolygonShape
   ) => {
     const { x: newX, y: newY } = current
     const { x: prevX, y: prevY } = initial
@@ -98,23 +101,25 @@ export class CustomLineUtil extends ShapeUtil<CustomLineShape> {
 
     const next = structuredClone(current)
 
+    const pts = next.props.points
+      .map(([x, y]) => [x + deltaX, y + deltaY])
+
     const newLine = {
       ...next,
       x: 0,
       y: 0,
       props: {
         ...next.props,
-        start: [next.props.start[0] + deltaX, next.props.start[1] + deltaY],
-        end: [next.props.end[0] + deltaX, next.props.end[1] + deltaY],
+        points: pts
       },
-    } as CustomLineShape
+    } as CustomPolygonShape
 
     this.editor.updateShape(newLine)
   }
 
-  component(shape: CustomLineShape) {
-    const line = this.editor.getShapeGeometry(shape) as Polyline2d
-    const path = line.toSimpleSvgPath()
+  component(shape: CustomPolygonShape) {
+    const polygon = this.editor.getShapeGeometry(shape) as Polygon2d
+    const path = polygon.toSimpleSvgPath()
 
     return (
       <SVGContainer>
@@ -123,9 +128,9 @@ export class CustomLineUtil extends ShapeUtil<CustomLineShape> {
     )
   }
 
-  indicator(shape: CustomLineShape) {
-    const line = this.editor.getShapeGeometry(shape) as Polyline2d
-    const path = line.toSimpleSvgPath()
+  indicator(shape: CustomPolygonShape) {
+    const polygon = this.editor.getShapeGeometry(shape) as Polygon2d
+    const path = polygon.toSimpleSvgPath()
 
     return (
       <SVGContainer>

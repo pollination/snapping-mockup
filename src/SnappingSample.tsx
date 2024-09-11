@@ -1,9 +1,9 @@
 import { createShapeId, Editor, Tldraw } from 'tldraw'
 import 'tldraw/tldraw.css'
-import { CustomLineUtil } from './shapes/CustomLineUtil'
+import { CustomPolygonUtil } from './shapes/CustomPolygonUtil'
 import { useState } from 'react'
 
-const customShapeUtils = [CustomLineUtil]
+const customShapeUtils = [CustomPolygonUtil]
 
 export default function SnappingSample() {
   const [editor, setEditor] = useState<Editor | null>(null)
@@ -30,19 +30,19 @@ export default function SnappingSample() {
             editor.createShapes([
               {
                 id: createShapeId('a1'),
-                type: 'custom-line',
-                props: {
-                  start: [200, -200],
-                  end: [0, 0],
-                },
+                type: 'custom-polygon',
               },
               {
                 id: createShapeId('a2'),
-                type: 'custom-line',
+                type: 'custom-polygon',
                 props: {
-                  start: [0, 0],
-                  end: [200, 200],
-                },
+                  points: [
+                    [150, 0],
+                    [250, 0],
+                    [250, 100],
+                    [150, 100]
+                  ]
+                }
               },
             ])
           }}
@@ -110,7 +110,8 @@ export default function SnappingSample() {
             <input
               type="number"
               id="weight"
-              min={0.01}
+              min={0.1}
+              step={0.1}
               max={1.0}
               defaultValue={(editor as any).customSnapping.weight}
               onChange={(e) =>

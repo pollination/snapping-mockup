@@ -1,4 +1,4 @@
-import { Circle2d, Editor, TLHandle, TLShapeId, Vec } from '@tldraw/tldraw'
+import { Circle2d, Editor, Polygon2d, Polyline2d, TLHandle, TLShapeId, Vec } from '@tldraw/tldraw'
 
 // TODO: Add perpendicular
 export type SnapOptions = {
@@ -13,7 +13,7 @@ export type SnapOptions = {
  */
 export class SnapManager {
   private _editor = {} as Editor
-  private _weight = 1
+  private _radius = 100
 
   static SCALE_FACTOR: number = 100
 
@@ -22,7 +22,7 @@ export class SnapManager {
    */
   constructor(editor: Editor, weight: number = 1) {
     this._editor = editor
-    this._weight = weight
+    this._radius = weight * SnapManager.SCALE_FACTOR
   }
 
   /**
@@ -57,39 +57,50 @@ export class SnapManager {
       isFilled: true,
       x: pt.x,
       y: pt.y,
-      radius: this._weight * SnapManager.SCALE_FACTOR,
+      radius: this._radius
     })
 
     const vertices: Vec[] = []
     ids.forEach((id: TLShapeId) => {
       const shape = editor.getShape(id)
-      if (shape) {
-        const util = editor.getShapeUtil(shape)
-        if (options.nearest) {
-          const nearest = util.getGeometry(shape).nearestPoint(pt)
-          vertices.push(nearest)
-        } else if (options.end) {
-          const ends = util.getGeometry(shape).vertices ?? []
-          const filteredPts = ends?.filter(
-            (v: Vec) =>
-              circle.distanceToPoint(v) <
-              this._weight * SnapManager.SCALE_FACTOR
-          )
+      if (!shape) return
+
+      const util = editor.getShapeUtil(shape)
+      if (options.nearest) {
+        const nearest = util.getGeometry(shape).nearestPoint(pt)
+        vertices.push(nearest)
+      } else if (options.end) {
+        const ends = util.getGeometry(shape).vertices ?? []
+        const filteredPts = this.getWeightedPoints(ends, circle)
+        vertices.push(...filteredPts)
+      } else if (options.middle) {
+        const geo = util.getGeometry(shape)
+
+        let center
+        if (geo instanceof Polygon2d) {
+          const cpoints = geo.segments.map((e) => e.center)
+          const filteredPts = this.getWeightedPoints(cpoints, circle)
           vertices.push(...filteredPts)
-        } else if (options.middle) {
-          const center = util.getGeometry(shape).center
-          if (
-            circle.distanceToPoint(center) <
-            this._weight * SnapManager.SCALE_FACTOR
-          )
-            vertices.push(center)
+        } else if (geo instanceof Polyline2d 
+          && geo.segments.length === 1) {
+          center = util.getGeometry(shape).center
+          const filteredPts = this.getWeightedPoints([center], circle)
+          vertices.push(...filteredPts)
         } else {
-          // Do nothing
+          // Add other cases
         }
+      } else {
+        // Do nothing
       }
     })
 
     return vertices
+  }
+
+  private getWeightedPoints(pts: Vec[], circle: Circle2d) {
+    return pts?.filter(
+      (v: Vec) => circle.distanceToPoint(v) < this._radius
+    )
   }
 
   public snap(
@@ -141,7 +152,7 @@ export class SnapManager {
         nextHandle = { ...initialHandle, x: gridPts[0].x, y: gridPts[0].y }
       }
     } else {
-      if (minDist < gridSize) {
+      if (minDist < this._radius) {
         const index = distances.indexOf(minDist)
         const point = points[index]
         nextHandle = { ...initialHandle, x: point.x, y: point.y }
