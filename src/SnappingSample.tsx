@@ -40,9 +40,9 @@ export default function SnappingSample() {
                     [150, 0],
                     [250, 0],
                     [250, 100],
-                    [150, 100]
-                  ]
-                }
+                    [150, 100],
+                  ],
+                },
               },
             ])
           }}

@@ -25,18 +25,18 @@ export class CustomPolygonUtil extends ShapeUtil<CustomPolygonShape> {
         [0, 0],
         [100, 0],
         [100, 100],
-        [0, 100]
-      ]
+        [0, 100],
+      ],
     }
   }
 
   getGeometry(shape: CustomPolygonShape) {
-    // const pts: number[][] = [ ...shape.props.points, 
+    // const pts: number[][] = [ ...shape.props.points,
     //   [ ...shape.props.points].pop() as number[] ]
 
     return new Polygon2d({
       points: shape.props.points.map(Vec.FromArray),
-      isFilled: false
+      isFilled: false,
     })
   }
 
@@ -101,8 +101,7 @@ export class CustomPolygonUtil extends ShapeUtil<CustomPolygonShape> {
 
     const next = structuredClone(current)
 
-    const pts = next.props.points
-      .map(([x, y]) => [x + deltaX, y + deltaY])
+    const pts = next.props.points.map(([x, y]) => [x + deltaX, y + deltaY])
 
     const newLine = {
       ...next,
@@ -110,7 +109,7 @@ export class CustomPolygonUtil extends ShapeUtil<CustomPolygonShape> {
       y: 0,
       props: {
         ...next.props,
-        points: pts
+        points: pts,
       },
     } as CustomPolygonShape
 

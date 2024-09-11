@@ -1,4 +1,12 @@
-import { Circle2d, Editor, Polygon2d, Polyline2d, TLHandle, TLShapeId, Vec } from '@tldraw/tldraw'
+import {
+  Circle2d,
+  Editor,
+  Polygon2d,
+  Polyline2d,
+  TLHandle,
+  TLShapeId,
+  Vec,
+} from '@tldraw/tldraw'
 
 // TODO: Add perpendicular
 export type SnapOptions = {
@@ -57,7 +65,7 @@ export class SnapManager {
       isFilled: true,
       x: pt.x,
       y: pt.y,
-      radius: this._radius
+      radius: this._radius,
     })
 
     const vertices: Vec[] = []
@@ -81,8 +89,7 @@ export class SnapManager {
           const cpoints = geo.segments.map((e) => e.center)
           const filteredPts = this.getWeightedPoints(cpoints, circle)
           vertices.push(...filteredPts)
-        } else if (geo instanceof Polyline2d 
-          && geo.segments.length === 1) {
+        } else if (geo instanceof Polyline2d && geo.segments.length === 1) {
           center = util.getGeometry(shape).center
           const filteredPts = this.getWeightedPoints([center], circle)
           vertices.push(...filteredPts)
@@ -98,9 +105,7 @@ export class SnapManager {
   }
 
   private getWeightedPoints(pts: Vec[], circle: Circle2d) {
-    return pts?.filter(
-      (v: Vec) => circle.distanceToPoint(v) < this._radius
-    )
+    return pts?.filter((v: Vec) => circle.distanceToPoint(v) < this._radius)
   }
 
   public snap(
