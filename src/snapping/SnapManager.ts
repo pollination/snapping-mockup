@@ -84,18 +84,16 @@ export class SnapManager {
       } else if (options.middle) {
         const geo = util.getGeometry(shape)
 
-        let center
+        let pts: Vec[] = []
         if (geo instanceof Polygon2d) {
-          const cpoints = geo.segments.map((e) => e.center)
-          const filteredPts = this.getWeightedPoints(cpoints, circle)
-          vertices.push(...filteredPts)
+          pts = geo.segments.map((e) => e.center)
         } else if (geo instanceof Polyline2d && geo.segments.length === 1) {
-          center = util.getGeometry(shape).center
-          const filteredPts = this.getWeightedPoints([center], circle)
-          vertices.push(...filteredPts)
+          pts = [util.getGeometry(shape).center]
         } else {
           // Add other cases
         }
+        const filteredPts = this.getWeightedPoints(pts, circle)
+        vertices.push(...filteredPts)
       } else {
         // Do nothing
       }
